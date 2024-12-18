@@ -6,11 +6,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
+import org.lafresca.lafrescabackend.DTO.Request.StockRequestDTO;
 import org.lafresca.lafrescabackend.DTO.UserDTO;
 import org.lafresca.lafrescabackend.Models.Role;
 import org.lafresca.lafrescabackend.Models.User;
 import org.lafresca.lafrescabackend.Services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -68,8 +70,8 @@ public class UserController {
     }
 
     @PostMapping
-    public void registerNewUser(@RequestBody User user) {
-        userService.addNewUser(user);
+    public ResponseEntity<UserDTO> registerNewUser(@RequestBody User user) {
+        return userService.addNewUser(user);
     }
 
     @DeleteMapping(path = "{userId}")
@@ -78,8 +80,8 @@ public class UserController {
     }
 
     @PutMapping
-    public void updateUser(@RequestBody User user) {
-        userService.updateUser(user);
+    public ResponseEntity<User> updateUser(@RequestBody User user) {
+        return userService.updateUser(user);
     }
 
     @GetMapping(value = "/availableBranchManagers")

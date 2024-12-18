@@ -4,10 +4,12 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.lafresca.lafrescabackend.DTO.Request.StockRequestDTO;
 import org.lafresca.lafrescabackend.DTO.UserDTO;
 import org.lafresca.lafrescabackend.Models.User;
 import org.lafresca.lafrescabackend.Repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -61,42 +63,43 @@ public class UserService {
         return userDTOS;
     }
 
-    public void addNewUser(User user) {
+    public ResponseEntity<UserDTO> addNewUser(User user) {
+        UserDTO newUserDTO = new UserDTO(user.getId(),user.getFirstName(),user.getLastName(),user.getEmail(),user.getPhoneNumber(),user.getAddress(),user.getRole(),user.getCafeId(),user.getStatus());
         Optional<User> userByEmail = userRepository.findUserByEmail(user.getEmail());
         if (userByEmail.isPresent()) {
-            throw new IllegalStateException("Email already taken");
+            return ResponseEntity.status(401).body(null);
         }
         else {
             user.setEmail(user.getEmail());
         }
         if (user.getFirstName() == null || user.getFirstName().isEmpty()) {
-            throw new IllegalStateException("User first name cannot be null or empty");
+            return ResponseEntity.status(403).body(newUserDTO);
         }
         if(user.getLastName() == null || user.getLastName().isEmpty()) {
-            throw new IllegalStateException("User last name cannot be null or empty");
+            return ResponseEntity.status(403).body(newUserDTO);
         }
         if(user.getEmail() == null || user.getEmail().isEmpty() || !isValidEmail(user.getEmail()) ) {
-            throw new IllegalStateException("User email invalid");
+            return ResponseEntity.status(403).body(newUserDTO);
         }
         if(user.getPhoneNumber() == null || user.getPhoneNumber().length() != 10) {
-            throw new IllegalStateException("User phone number cannot be null and length should be 10");
+            return ResponseEntity.status(403).body(newUserDTO);
         }
         if(user.getRole() == null || user.getRole().isEmpty()) {
-            throw new IllegalStateException("User role cannot be null or empty");
+            return ResponseEntity.status(403).body(newUserDTO);
         }
         if(!(user.getRole()!="ADMIN" || user.getRole()!="CUSTOMER" || user.getRole()!="TOP_LEVEL_MANAGER" || user.getRole()!="CAFE_MANAGER" || user.getRole()!="CASHIER" || user.getRole()!="KITCHEN_MANAGER" || user.getRole()!="WAITER" || user.getRole()!="DELIVERY_PERSON" || user.getRole()!="STOCKKEEPER" || user.getRole()!="BRANCH_MANAGER")) {
-            throw new IllegalStateException("User role not valid");
+            return ResponseEntity.status(403).body(newUserDTO);
         }
         if(user.getPassword() == null || user.getPassword().isEmpty()) {
-            throw new IllegalStateException("User password cannot be null or empty");
+            return ResponseEntity.status(403).body(newUserDTO);
         }
         if(user.getPassword().length() < 6) {
-            throw new IllegalStateException("User password length should be greater than or equal to 6");
+            return ResponseEntity.status(403).body(newUserDTO);
         }
         if(user.getAddress()==null || user.getAddress().isEmpty()) {
-            throw new IllegalStateException("User address cannot be null or empty");
+            return ResponseEntity.status(403).body(newUserDTO);
         }
-        if(user.getRole() ==  "WAITER" || user.getRole() == "DELIVERY_PERSON") {
+        if(user.getRole().equals("WAITER") || user.getRole().equals("DELIVERY_PERSON")) {
             user.setStatus("AVAILABLE");
             user.setStatusUpdatedAt(System.currentTimeMillis());
         }
@@ -117,6 +120,8 @@ public class UserService {
         String logmessage = now + " " + username + " " + "Created new user (id: " + saveduser.getId() + ")";
         systemLogService.writeToFile(logmessage);
         log.info(logmessage);
+
+        return ResponseEntity.status(201).body(newUserDTO);
     }
 
     public void deleteUser(String userId) {
@@ -133,7 +138,7 @@ public class UserService {
         userRepository.deleteById(userId);
     }
 
-    public void updateUser(User user) {
+    public ResponseEntity<User> updateUser(User user) {
         User userToUpdate = userRepository.findById(user.getUserId())
                 .orElseThrow(() -> new IllegalStateException("User with id " + user.getUserId() + " does not exist"));
 
@@ -170,6 +175,7 @@ public class UserService {
         String logmessage = now + " " + username + " " + "Updated user (id: " + user.getId() + ")";
         systemLogService.writeToFile(logmessage);
         log.info(logmessage);
+        return ResponseEntity.status(200).body(user);
     }
 
     public UserDTO getUserById(String userId) {
